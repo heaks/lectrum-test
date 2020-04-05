@@ -9,8 +9,19 @@ const Login = ({ history  }) => {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState(null);
+  const [failedLoginsCount, setFailedLoginsCount] = useState(0);
+  const [blockTimeStamp, setBlockTimeStamp] = useState(null);
+
+  const blockUser = () => {
+    setFailedLoginsCount(0);
+    setBlockTimeStamp((+new Date()) + 60 * 1000);
+  };
 
   const onLogin = () => {
+    if (blockTimeStamp && blockTimeStamp > new Date()) {
+      return setErrorMessage('Too many failed attempts, try in one minute');
+    }
+
     const storageLogin = localStorage.getItem('username');
     const storagePassword = localStorage.getItem('password');
 
@@ -18,6 +29,11 @@ const Login = ({ history  }) => {
       return setErrorMessage('User Unknown');
     }
     if (storagePassword !== password) {
+      setFailedLoginsCount(failedLoginsCount + 1);
+      if (failedLoginsCount >= 3) {
+        setErrorMessage('Too many failed attempts, try in one minute');
+        return blockUser();
+      }
       return setErrorMessage('Invalid Password');
     }
     localStorage.setItem('token', 'mockTokenData');
